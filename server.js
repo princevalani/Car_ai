@@ -68,16 +68,23 @@ app.post("/webhook", async (req, res) => {
 
     let aiReply = "";
     try {
-      aiReply = await getAIReply(customerPhone, customerMessage);
-      
-      // AI Fallback
-      if (aiReply.includes("I'm sorry, I'm having trouble") && process.env.MISTRAL_API_KEY) {
-        const mistralReply = await getMistralReply(customerPhone, customerMessage);
-        if (mistralReply && !mistralReply.includes("I'm sorry, I'm having trouble")) {
-            aiReply = mistralReply;
-        } else {
-            aiReply = getLocalFallbackReply(customerMessage);
+      // Mistral is now PRIMARY AI 🦍
+      if (process.env.MISTRAL_API_KEY) {
+        aiReply = await getMistralReply(customerPhone, customerMessage);
+      }
+
+      // Gemini is now FALLBACK AI 💎
+      if ((!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) && process.env.GEMINI_API_KEY) {
+        console.log("⚠️ Mistral failed or skipped. Falling back to Gemini...");
+        const geminiReply = await getAIReply(customerPhone, customerMessage);
+        if (geminiReply && !geminiReply.includes("I'm sorry, I'm having trouble")) {
+            aiReply = geminiReply;
         }
+      }
+
+      // Final Local Fallback if both AI fail
+      if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
+        aiReply = getLocalFallbackReply(customerMessage);
       }
     } catch (aiErr) {
        aiReply = getLocalFallbackReply(customerMessage);
@@ -153,19 +160,26 @@ app.post("/api/toggle-ai", (req, res) => {
 app.post("/api/test-reply", async (req, res) => {
   const { phone, message } = req.body;
   try {
-    let aiReply = await getAIReply(phone || "test-user", message);
-    
-    // AI Fallback for Tests
-    if (aiReply.includes("I'm sorry, I'm having trouble") && process.env.MISTRAL_API_KEY) {
+    let aiReply = "";
+
+    // 1️⃣ Try Mistral First 🦍
+    if (process.env.MISTRAL_API_KEY) {
         const mistralReply = await getMistralReply(phone || "test-user", message);
         if (mistralReply && !mistralReply.includes("I'm sorry, I'm having trouble")) {
             aiReply = mistralReply;
-        } else {
-            console.log("⚠️ Mistral also failed in test-reply. Using local fallback...");
-            aiReply = getLocalFallbackReply(message);
         }
-    } else if (aiReply.includes("I'm sorry, I'm having trouble")) {
-        // If no Mistral API Key or bypassed
+    }
+    
+    // 2️⃣ Try Gemini Fallback 💎
+    if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
+        const geminiReply = await getAIReply(phone || "test-user", message);
+        if (geminiReply && !geminiReply.includes("I'm sorry, I'm having trouble")) {
+            aiReply = geminiReply;
+        }
+    }
+
+    // 3️⃣ Final Local Fallback
+    if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
         aiReply = getLocalFallbackReply(message);
     }
     
