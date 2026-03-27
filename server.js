@@ -6,7 +6,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { connectDB, Car, Lead } = require("./services/dbService");
-const { getAIReply, clearChatHistory, getActiveChatCount } = require("./services/geminiService");
 const { getMistralReply } = require("./services/mistralService");
 const { sendWhatsAppMessage } = require("./services/elevenZaService");
 const fs = require('fs');
@@ -68,21 +67,12 @@ app.post("/webhook", async (req, res) => {
 
     let aiReply = "";
     try {
-      // Mistral is now PRIMARY AI 🦍
+      // Mistral is the ONLY Primary AI 🦍
       if (process.env.MISTRAL_API_KEY) {
         aiReply = await getMistralReply(customerPhone, customerMessage);
       }
 
-      // Gemini is now FALLBACK AI 💎
-      if ((!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) && process.env.GEMINI_API_KEY) {
-        console.log("⚠️ Mistral failed or skipped. Falling back to Gemini...");
-        const geminiReply = await getAIReply(customerPhone, customerMessage);
-        if (geminiReply && !geminiReply.includes("I'm sorry, I'm having trouble")) {
-            aiReply = geminiReply;
-        }
-      }
-
-      // Final Local Fallback if both AI fail
+      // Final Local Fallback if AI fails
       if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
         aiReply = getLocalFallbackReply(customerMessage);
       }
@@ -145,7 +135,7 @@ app.get("/api/leads", async (req, res) => {
 app.get("/api/stats", (req, res) => {
   res.json({
     ...stats,
-    activeChats: getActiveChatCount(),
+    activeChats: 0, // Gemini history count removed
     uptime: Math.floor((Date.now() - stats.startTime.getTime()) / 1000),
   });
 });
@@ -162,7 +152,7 @@ app.post("/api/test-reply", async (req, res) => {
   try {
     let aiReply = "";
 
-    // 1️⃣ Try Mistral First 🦍
+    // 1️⃣ Mistral is now ONLY AI 🦍
     if (process.env.MISTRAL_API_KEY) {
         const mistralReply = await getMistralReply(phone || "test-user", message);
         if (mistralReply && !mistralReply.includes("I'm sorry, I'm having trouble")) {
@@ -170,15 +160,7 @@ app.post("/api/test-reply", async (req, res) => {
         }
     }
     
-    // 2️⃣ Try Gemini Fallback 💎
-    if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
-        const geminiReply = await getAIReply(phone || "test-user", message);
-        if (geminiReply && !geminiReply.includes("I'm sorry, I'm having trouble")) {
-            aiReply = geminiReply;
-        }
-    }
-
-    // 3️⃣ Final Local Fallback
+    // 2️⃣ Final Local Fallback
     if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
         aiReply = getLocalFallbackReply(message);
     }

@@ -7,14 +7,25 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
     try {
         if (!process.env.MONGODB_URI) {
-            console.warn("⚠️ MONGODB_URI missing in .env. Using JSON fallback for now.");
+            console.warn("⚠️ MONGODB_URI missing in .env. Using JSON fallback.");
             return false;
         }
-        await mongoose.connect(process.env.MONGODB_URI);
+
+        // Add timeout to not hang forever
+        const options = {
+            serverSelectionTimeoutMS: 5000, 
+            socketTimeoutMS: 45000,
+            family: 4 // Use IPv4 for stability
+        };
+
+        console.log("⏳ Connecting to MongoDB Atlas...");
+        await mongoose.connect(process.env.MONGODB_URI, options);
         console.log("💎 MongoDB Connected Successfully!");
         return true;
     } catch (err) {
-        console.error("❌ MongoDB Connection Error:", err.message);
+        console.error("❌ MongoDB Connection Error Details:");
+        console.error("-> Message:", err.message);
+        console.error("-> Code:", err.code);
         return false;
     }
 };
