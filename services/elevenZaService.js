@@ -30,15 +30,25 @@ async function sendWhatsAppMessage(customerPhone, message) {
         text: message
     };
 
-    const response = await axios.post(
-      "https://internal.11za.in/apis/sendMessage/sendMessages",
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
+    let response;
+    try {
+      response = await axios.post(
+        "https://internal.11za.in/apis/sendMessage/sendMessages",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+    } catch (err) {
+      if (err.response?.status === 404) {
+        console.log("⚠️ New API 404ed. Trying Standard 11za /sendText endpoint...");
+        response = await axios.post(
+          `${API_BASE}/sendText`,
+          { to: customerPhone, message: message },
+          { headers: { "Content-Type": "application/json", "authToken": AUTH_TOKEN } }
+        );
+      } else {
+        throw err;
       }
-    );
+    }
 
     console.log(`✅ Message sent successfully to ${sendToNumber}`);
     return { success: true, data: response.data };
