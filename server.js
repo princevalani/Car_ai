@@ -33,19 +33,37 @@ let stats = {
 const messageLogs = [];
 
 // ============================================
-// WEBHOOK ENDPOINT
+// WEBHOOK ENDPOINT (Advanced Payload Support)
 // ============================================
 app.post("/webhook", async (req, res) => {
   try {
-    const webhookData = req.body;
-    let customerPhone = webhookData.phone || webhookData.from || "";
-    let customerMessage = webhookData.message || webhookData.text || "";
-    let customerName = webhookData.name || "Customer";
+    const payload = req.body;
+    
+    // Ignore status updates, only process actual incoming text messages
+    if (payload.event && payload.event !== "MoMessage") {
+      return res.status(200).json({ status: "skipped", reason: "Not an incoming message" });
+    }
+
+    // Advanced Parsing based on the provided payload structure
+    let customerPhone = payload.from || payload.phone || "";
+    let customerName = payload.whatsapp?.senderName || payload.name || "Customer";
+    let customerMessage = null;
+
+    if (payload.content && payload.content.contentType === "text") {
+        customerMessage = payload.content.text?.trim() || null;
+    } else if (payload.content && payload.content.contentType === "media") {
+        // Here you would normally handle Voice/STT logic
+        console.log("🎤 Media/Voice message received, text extraction needed.");
+        customerMessage = payload.content.text?.trim() || "audio message"; // Fallback
+    } else {
+        // Fallback for simple flat JSON payloads
+        customerMessage = payload.text || payload.message || "";
+    }
 
     stats.totalReceived++;
 
     if (!customerMessage) {
-        return res.status(200).json({ status: "skipped" });
+        return res.status(200).json({ status: "skipped", reason: "No text content found" });
     }
 
     let aiReply = "";
