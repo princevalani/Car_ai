@@ -270,6 +270,10 @@ function getLocalFallbackReply(message) {
 
 app.get("/api/health", (req, res) => { res.json({ status: "running" }); });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Mahindra AI Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Mahindra AI Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
