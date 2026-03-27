@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1774592418185,
+    "name": "Valani Prince",
+    "phone": "6355991770",
+    "car": "Mahindra XUV700",
+    "date": "27 Mar 2026, 10:00 AM",
+    "status": "New"
+  },
+  {
+    "id": 1774593174885,
+    "name": "Deepak Agraval",
+    "phone": "5698745632",
+    "car": "Mahindra Scorpio-N",
+    "date": "27 Mar 2024 10:45",
+    "status": "New"
+  },
+  {
+    "id": 1774600752862,
+    "name": "Name",
+    "phone": "Phone",
+    "car": "Mahindra XUV700",
+    "date": "Today",
+    "status": "New"
+  },
+  {
+    "id": 1774600792029,
+    "name": "tarun",
+    "phone": "5698325698",
+    "car": "XUV700",
+    "date": "Now",
+    "status": "New"
+  },
+  {
+    "id": 1774600822060,
+    "name": "Tarun",
+    "phone": "9985642356",
+    "car": "Mahindra XUV700",
+    "date": "Now",
+    "status": "New"
+  },
+  {
+    "id": 1774601267870,
+    "name": "Raj",
+    "phone": "9988776655",
+    "car": "Mahindra XUV700",
+    "date": "Tomorrow at 10 AM",
+    "status": "New"
+  },
+  {
+    "id": 1774601905313,
+    "name": "Rahul",
+    "phone": "7788994455",
+    "car": "XUV700",
+    "date": "tomorrow lunch time",
+    "status": "New"
+  },
+  {
+    "id": 1774602038208,
+    "name": "Rahul",
+    "phone": "7788994455",
+    "car": "XUV700",
+    "date": "tomorrow lunch time",
+    "status": "New"
+  }
+]

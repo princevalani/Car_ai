@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mahindra Auto AI Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      /* Remove completely solid background if inside iframe, but keep dark theme */
+      background-color: transparent;
+      color: #f1f5f9;
+      margin: 0; height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+    .chat-bubble {
+        max-width: 80%;
+        padding: 12px 18px;
+        font-size: 15px;
+        line-height: 1.5;
+        animation: bubbleIn 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes bubbleIn {
+        from { opacity: 0; transform: translateY(10px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chat-bubble.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+        color: white;
+        border-radius: 20px 20px 4px 20px;
+    }
+
+    .chat-bubble.ai {
+        align-self: flex-start;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+        border-radius: 20px 20px 20px 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-900">
+  
+  <!-- HEADER -->
+  <header class="glass-panel px-6 py-4 flex items-center justify-between z-10 sticky top-0">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-sky-500/20">
+        <i class="ph-fill ph-car-profile"></i>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold tracking-tight text-white m-0">Mahindra Auto AI</h2>
+        <p class="text-xs font-medium text-emerald-400 flex items-center gap-1.5 m-0 mt-0.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Online
+        </p>
+      </div>
+    </div>
+    <button onclick="location.reload()" class="h-10 w-10 rounded-xl bg-slate-800/50 hover:bg-slate-700 text-slate-300 border border-slate-700/50 flex items-center justify-center transition-all">
+      <i class="ph ph-arrows-clockwise text-xl"></i>
+    </button>
+  </header>
+
+  <!-- MAIN CHAT AREA -->
+  <main class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 relative" id="chatArea">
+    <!-- Chat bubbles will appear here purely based on user typing and backend response -->
+  </main>
+
+  <!-- INPUT AREA -->
+  <footer class="p-4 bg-slate-900 border-t border-slate-800">
+    <div class="flex items-center gap-3 max-w-4xl mx-auto">
+      <div class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl flex items-center px-4 py-2 hover:border-sky-500/50 transition-colors focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500/50">
+        <input type="text" id="testInput" 
+          class="w-full bg-transparent border-none text-slate-200 focus:outline-none placeholder-slate-500 text-sm md:text-base py-2"
+          placeholder="Ask about features, test drives, or car models..." 
+          onkeypress="if(event.key==='Enter') testReply()">
+      </div>
+      <button id="sendBtn" onclick="testReply()" 
+        class="bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white rounded-xl px-6 py-3.5 font-bold shadow-lg shadow-sky-500/25 transition-all active:scale-95 flex items-center gap-2">
+        <span>Send</span> <i class="ph-bold ph-paper-plane-right"></i>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let isTyping = false;
+
+    async function testReply() {
+      if (isTyping) return;
+      const input = document.getElementById('testInput');
+      const chatArea = document.getElementById('chatArea');
+      const message = input.value.trim();
+
+      if (!message) return;
+
+      // Add user bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble user';
+      userBubble.innerHTML = `<div class="content whitespace-pre-wrap">${escapeHtml(message)}</div>`;
+      chatArea.appendChild(userBubble);
+
+      input.value = '';
+      chatArea.scrollTop = chatArea.scrollHeight;
+      
+      isTyping = true;
+      const sendBtnIcon = document.querySelector('#sendBtn i');
+      sendBtnIcon.className = "ph-bold ph-spinner animate-spin";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/test-reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: 'test-user', message }),
+        });
+        const data = await res.json();
+
+        // Add AI bubble 
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'chat-bubble ai';
+        aiBubble.innerHTML = `<div class="font-bold text-sky-400 text-xs tracking-wider uppercase mb-1 flex items-center gap-1"><i class="ph-fill ph-robot text-sm"></i> Mahindra Mitra</div><div class="content whitespace-pre-wrap"></div>`;
+        chatArea.appendChild(aiBubble);
+        
+        // Typewriter Effect
+        await typeWriter(aiBubble.querySelector('.content'), data.reply || 'Sorry, I am having trouble connecting.');
+
+      } catch (err) {
+        const errorBubble = document.createElement('div');
+        errorBubble.className = 'chat-bubble ai';
+        errorBubble.innerHTML = `<div class="content text-red-400">❌ Server Connection Error. Retrying...</div>`;
+        chatArea.appendChild(errorBubble);
+      }
+
+      sendBtnIcon.className = "ph-bold ph-paper-plane-right";
+      isTyping = false;
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    async function typeWriter(element, text) {
+      // Small chunks for fast but smooth typing
+      const chars = text.split('');
+      for (let i = 0; i < chars.length; i++) {
+        element.innerHTML += chars[i];
+        if (i % 5 === 0) {
+            document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+        }
+        await new Promise(resolve => setTimeout(resolve, 5));
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

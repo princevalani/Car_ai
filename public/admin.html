@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahindra AI - Admin Dashboard</title>
+    <!-- Tailwind CSS for Advanced UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for Premium Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a; /* Slate 900 */
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-200 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-slate-700 flex flex-col transition-all">
+        <div class="h-20 flex items-center px-8 border-b border-slate-700/50">
+            <i class="ph-fill ph-car-profile text-3xl text-sky-400 mr-3"></i>
+            <h1 class="text-xl font-bold tracking-tight">AI<span class="text-slate-400 font-medium">Showroom</span></h1>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="#" onclick="switchTab('dashboard')" class="nav-btn active flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400 font-semibold transition-colors">
+                <i class="ph ph-squares-four text-xl"></i> Dashboard
+            </a>
+            <a href="#" onclick="switchTab('cars')" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium transition-colors">
+                <i class="ph ph-car text-xl"></i> Car Inventory
+            </a>
+            <a href="#" onclick="switchTab('leads')" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium transition-colors">
+                <i class="ph ph-users text-xl"></i> Test Drives
+            </a>
+            <a href="#" onclick="switchTab('inbox')" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium transition-colors">
+                <i class="ph ph-chat-teardrop-dots text-xl"></i> Live Inbox
+            </a>
+            <a href="#" onclick="switchTab('chat')" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium transition-colors mt-auto">
+                <i class="ph ph-robot text-xl"></i> Chatbot Demo
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Topbar -->
+        <header class="h-20 glass-panel border-b border-slate-700/50 flex items-center justify-between px-8 z-10">
+            <h2 id="pageTitle" class="text-2xl font-bold">Overview</h2>
+            <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">A</div>
+            </div>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-8 relative z-0">
+            
+            <!-- ====== DASHBOARD TAB ====== -->
+            <div id="tab-dashboard" class="tab-content block space-y-8">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 text-emerald-500/10 group-hover:scale-110 transition-transform"><i class="ph-fill ph-users text-9xl"></i></div>
+                        <h3 class="text-slate-400 font-medium mb-2">Total App Visitors</h3>
+                        <p class="text-4xl font-bold text-white" id="statVisitors">0</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 text-sky-500/10 group-hover:scale-110 transition-transform"><i class="ph-fill ph-car text-9xl"></i></div>
+                        <h3 class="text-slate-400 font-medium mb-2">Cars in DB</h3>
+                        <p class="text-4xl font-bold text-white" id="statCars">0</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 text-amber-500/10 group-hover:scale-110 transition-transform"><i class="ph-fill ph-check-square-offset text-9xl"></i></div>
+                        <h3 class="text-slate-400 font-medium mb-2">Test Drive Leads</h3>
+                        <p class="text-4xl font-bold text-white" id="statLeads">0</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 text-purple-500/10 group-hover:scale-110 transition-transform"><i class="ph-fill ph-chat-circle text-9xl"></i></div>
+                        <h3 class="text-slate-400 font-medium mb-2">Total Messages</h3>
+                        <p class="text-4xl font-bold text-white flex items-center gap-2" id="statMessages">0</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass-panel rounded-2xl p-6 border border-slate-700/50">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i class="ph ph-clock-counter-clockwise text-sky-400"></i> Recent Test Drives</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700/50 text-slate-400 text-sm tracking-wide">
+                                    <th class="pb-3 px-4 font-medium">Customer</th>
+                                    <th class="pb-3 px-4 font-medium">Car Model</th>
+                                    <th class="pb-3 px-4 font-medium">Phone</th>
+                                    <th class="pb-3 px-4 font-medium">Date/Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentLeadsTable" class="text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== CARS TAB ====== -->
+            <div id="tab-cars" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <p class="text-slate-400">Manage your AI chatbot's car knowledge base.</p>
+                    <button onclick="openCarModal()" class="bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2">
+                        <i class="ph ph-plus-bold"></i> Add New Car
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="carsGrid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- ====== LEADS TAB ====== -->
+            <div id="tab-leads" class="tab-content hidden space-y-6">
+                <p class="text-slate-400">Test drive bookings extracted automatically by the AI.</p>
+                <div class="glass-panel rounded-2xl p-2 border border-slate-700/50">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-800/50">
+                            <tr class="text-slate-400 text-sm">
+                                <th class="py-4 px-6 font-medium rounded-tl-xl">ID</th>
+                                <th class="py-4 px-6 font-medium">Customer Info</th>
+                                <th class="py-4 px-6 font-medium">Model Interested</th>
+                                <th class="py-4 px-6 font-medium">Schedule</th>
+                                <th class="py-4 px-6 font-medium rounded-tr-xl">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allLeadsTable" class="divide-y divide-slate-700/50">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ====== INBOX TAB ====== -->
+            <div id="tab-inbox" class="tab-content hidden space-y-6">
+                <p class="text-slate-400">Live conversation logs with all your WhatsApp customers.</p>
+                <div class="glass-panel rounded-2xl p-2 border border-slate-700/50">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-800/50">
+                            <tr class="text-slate-400 text-sm">
+                                <th class="py-4 px-6 font-medium rounded-tl-xl w-32">Time</th>
+                                <th class="py-4 px-6 font-medium w-48">Customer</th>
+                                <th class="py-4 px-6 font-medium w-1/3">Message (In)</th>
+                                <th class="py-4 px-6 font-medium rounded-tr-xl">AI Reply (Out)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTable" class="divide-y divide-slate-700/50">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ====== CHAT TAB ====== -->
+            <div id="tab-chat" class="tab-content hidden h-[calc(100vh-13rem)] w-full rounded-3xl overflow-hidden border border-slate-700/50 shadow-2xl">
+                <iframe src="/" class="w-full h-full border-none"></iframe>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal for Adding Car -->
+    <div id="carModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity">
+        <div class="glass-panel w-full max-w-lg rounded-2xl shadow-2xl border border-slate-700 p-8 transform scale-95 transition-transform duration-300" id="carModalContent">
+            <h3 class="text-2xl font-bold mb-6">Add New Car</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Car Model Name</label>
+                    <input type="text" id="inpModel" placeholder="e.g. Mahindra Bolero Neo" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Image URL</label>
+                    <input type="text" id="inpImage" placeholder="https://link-to-car-image.png" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Price Range</label>
+                    <input type="text" id="inpPrice" placeholder="e.g. ₹9 Lakh - ₹12 Lakh" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Short Description</label>
+                    <input type="text" id="inpDesc" placeholder="e.g. Tough and Rugged SUV" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Features (comma separated)</label>
+                    <textarea id="inpFeat" rows="3" placeholder="7-seater, mHawk Engine, Multi-terrain technology" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors"></textarea>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="closeCarModal()" class="px-5 py-2.5 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">Cancel</button>
+                <button onclick="saveCar()" class="bg-sky-500 hover:bg-sky-400 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-sky-500/20 transition-all">Save Car to AI</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCars = [];
+        let currentLeads = [];
+        let currentStats = {};
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-sky-500/10', 'text-sky-400');
+                el.classList.add('text-slate-400');
+            });
+            const activeBtn = event.currentTarget || document.querySelector('.nav-btn');
+            activeBtn.classList.add('bg-sky-500/10', 'text-sky-400');
+            activeBtn.classList.remove('text-slate-400');
+
+            const titles = { 'dashboard': 'Overview', 'cars': 'Car Inventory / DB', 'leads': 'Test Drive Leads', 'inbox': 'Live Customer Inbox', 'chat': 'Live Chatbot Tester' };
+            document.getElementById('pageTitle').innerText = titles[tab];
+        }
+
+        // Fetch Data
+        async function loadData() {
+            try {
+                const [carsRes, leadsRes, statsRes, logsRes] = await Promise.all([
+                    fetch('/api/cars'), fetch('/api/leads'), fetch('/api/stats'), fetch('/api/logs')
+                ]);
+                currentCars = await carsRes.json();
+                currentLeads = await leadsRes.json();
+                currentStats = await statsRes.json();
+                
+                const logs = await logsRes.json();
+                updateLogsUI(logs);
+                updateUI();
+            } catch (e) {
+                console.error("Failed to load data", e);
+            }
+        }
+
+        function updateUI() {
+            // Stats
+            document.getElementById('statCars').innerText = currentCars.length;
+            document.getElementById('statLeads').innerText = currentLeads.length;
+            document.getElementById('statVisitors').innerText = currentStats.activeChats || '0';
+            document.getElementById('statMessages').innerText = currentStats.totalReceived || '0';
+
+            // Cars Grid
+            const carsGrid = document.getElementById('carsGrid');
+            carsGrid.innerHTML = currentCars.map(c => `
+                <div class="glass-panel rounded-2xl border border-slate-700/50 hover:border-sky-500/30 transition-colors group overflow-hidden flex flex-col">
+                    <div class="h-48 w-full bg-slate-800/50 relative">
+                        <img src="${c.image || 'https://via.placeholder.com/400x200?text=No+Image'}" alt="${c.model}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#1e293b] to-transparent"></div>
+                    </div>
+                    <div class="p-6 pt-2 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2 relative z-10">
+                            <div>
+                                <h4 class="text-xl font-bold text-white group-hover:text-sky-400 transition-colors">${c.model}</h4>
+                                <p class="text-amber-400 font-bold text-md mt-1">${c.price}</p>
+                            </div>
+                            <button onclick="deleteCar(${c.id})" class="text-slate-500 hover:text-red-400 transition-colors bg-slate-800/80 p-2 rounded-lg backdrop-blur shadow"><i class="ph-fill ph-trash text-lg"></i></button>
+                        </div>
+                        <p class="text-slate-300 text-sm mb-4 leading-relaxed">${c.description}</p>
+                        <div class="flex flex-wrap gap-2 mt-auto">
+                            ${c.features.map(f => `<span class="px-2.5 py-1 rounded-md bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700/80 shadow-sm">${f}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Leads Tables
+            const leadsHtml = currentLeads.slice().reverse().map(l => `
+                <tr class="group hover:bg-slate-800/30 transition-colors cursor-default">
+                    <td class="py-4 px-6 text-slate-500 text-xs font-mono">#${String(l.id).slice(-4)}</td>
+                    <td class="py-4 px-6">
+                        <div class="font-medium text-slate-200">${l.name}</div>
+                        <div class="text-xs text-slate-500 mt-0.5"><i class="ph ph-phone mr-1"></i>${l.phone}</div>
+                    </td>
+                    <td class="py-4 px-6 text-sky-400 font-medium">${l.car}</td>
+                    <td class="py-4 px-6 text-slate-400 text-sm"><i class="ph ph-calendar-blank mr-1"></i>${l.date}</td>
+                    <td class="py-4 px-6"><span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold border border-emerald-500/20">New Lead</span></td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('allLeadsTable').innerHTML = leadsHtml;
+            document.getElementById('recentLeadsTable').innerHTML = currentLeads.slice().reverse().slice(0, 5).map(l => `
+                <tr class="border-b border-slate-700/30 last:border-0 hover:bg-slate-800/30">
+                    <td class="py-3 px-4 text-white font-medium">${l.name}</td>
+                    <td class="py-3 px-4 text-sky-400">${l.car}</td>
+                    <td class="py-3 px-4 text-slate-400">${l.phone}</td>
+                    <td class="py-3 px-4 text-slate-500 text-sm">${l.date}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateLogsUI(logs) {
+            document.getElementById('logsTable').innerHTML = logs.map(l => `
+                <tr class="group hover:bg-slate-800/30 transition-colors cursor-default align-top">
+                    <td class="py-4 px-6 text-slate-500 text-xs">${new Date(l.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                    <td class="py-4 px-6">
+                        <div class="font-bold text-slate-200">${l.name || 'WhatsApp User'}</div>
+                        <div class="text-xs text-sky-500 mt-0.5">${l.phone}</div>
+                    </td>
+                    <td class="py-4 px-6 text-slate-300 text-sm leading-relaxed">${l.incoming}</td>
+                    <td class="py-4 px-6 text-emerald-400 text-sm leading-relaxed whitespace-pre-wrap">${l.outgoing}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Modal Logic
+        function openCarModal() {
+            const modal = document.getElementById('carModal');
+            const content = document.getElementById('carModalContent');
+            modal.classList.remove('hidden');
+            // Small delay to allow block display to apply before fading in
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeCarModal() {
+            const modal = document.getElementById('carModal');
+            const content = document.getElementById('carModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Clear inputs
+                document.getElementById('inpModel').value = '';
+                document.getElementById('inpImage').value = '';
+                document.getElementById('inpPrice').value = '';
+                document.getElementById('inpDesc').value = '';
+                document.getElementById('inpFeat').value = '';
+            }, 300);
+        }
+
+        async function saveCar() {
+            const model = document.getElementById('inpModel').value;
+            const image = document.getElementById('inpImage').value;
+            const price = document.getElementById('inpPrice').value;
+            const desc = document.getElementById('inpDesc').value;
+            const featText = document.getElementById('inpFeat').value;
+            
+            if(!model || !price) return alert("Model & Price required!");
+
+            const newCar = {
+                id: Date.now(),
+                model, image, price, description: desc,
+                features: featText.split(',').map(f => f.trim()).filter(f => f)
+            };
+
+            currentCars.push(newCar);
+            
+            await fetch('/api/cars', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(currentCars)
+            });
+            
+            closeCarModal();
+            updateUI();
+        }
+
+        async function deleteCar(id) {
+            if(!confirm("Are you sure you want to remove this car?")) return;
+            currentCars = currentCars.filter(c => c.id !== id);
+            await fetch('/api/cars', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(currentCars)
+            });
+            updateUI();
+        }
+
+        // Init
+        loadData();
+        // Refresh leads every 10 seconds silently
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>
