@@ -155,15 +155,15 @@
     }
 
     async function typeWriter(element, text) {
-      // Small chunks for fast but smooth typing
       const chars = text.split('');
+      const chatArea = document.getElementById('chatArea');
       for (let i = 0; i < chars.length; i++) {
         element.innerHTML += chars[i];
-        if (i % 5 === 0) {
-            document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
-        }
-        await new Promise(resolve => setTimeout(resolve, 5));
+        // Instant scroll to follow the text
+        chatArea.scrollTop = chatArea.scrollHeight;
+        await new Promise(resolve => setTimeout(resolve, 8)); // Slightly faster typing
       }
+      chatArea.scrollTop = chatArea.scrollHeight; // Final scroll check
     }
 
     function escapeHtml(text) {

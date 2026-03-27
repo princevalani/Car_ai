@@ -188,30 +188,38 @@
         <div class="glass-panel w-full max-w-lg rounded-2xl shadow-2xl border border-slate-700 p-8 transform scale-95 transition-transform duration-300" id="carModalContent">
             <h3 class="text-2xl font-bold mb-6">Add New Car</h3>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Car Model Name</label>
-                    <input type="text" id="inpModel" placeholder="e.g. Mahindra Bolero Neo" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Car Model Name</label>
+                        <input type="text" id="inpModel" placeholder="e.g. XUV700" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Price Range</label>
+                        <input type="text" id="inpPrice" placeholder="₹14L - ₹26L" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-400 mb-1">Image URL</label>
-                    <input type="text" id="inpImage" placeholder="https://link-to-car-image.png" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                    <input type="text" id="inpImage" placeholder="https://..." class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Price Range</label>
-                    <input type="text" id="inpPrice" placeholder="e.g. ₹9 Lakh - ₹12 Lakh" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Short Description</label>
-                    <input type="text" id="inpDesc" placeholder="e.g. Tough and Rugged SUV" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Variants (comma separated)</label>
+                        <input type="text" id="inpVariants" placeholder="AX5, AX7, AX7L" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Colors (comma separated)</label>
+                        <input type="text" id="inpColors" placeholder="White, Black, Red" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-400 mb-1">Features (comma separated)</label>
-                    <textarea id="inpFeat" rows="3" placeholder="7-seater, mHawk Engine, Multi-terrain technology" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors"></textarea>
+                    <textarea id="inpFeat" rows="2" placeholder="ADAS, Skyroof, Sony 3D Sound" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white outline-none focus:border-sky-500 transition-colors"></textarea>
                 </div>
             </div>
             <div class="mt-8 flex justify-end gap-3">
                 <button onclick="closeCarModal()" class="px-5 py-2.5 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">Cancel</button>
-                <button onclick="saveCar()" class="bg-sky-500 hover:bg-sky-400 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-sky-500/20 transition-all">Save Car to AI</button>
+                <button id="saveBtn" onclick="saveCar()" class="bg-sky-500 hover:bg-sky-400 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-sky-500/20 transition-all">Save to Database</button>
             </div>
         </div>
     </div>
@@ -277,11 +285,11 @@
                                 <h4 class="text-xl font-bold text-white group-hover:text-sky-400 transition-colors">${c.model}</h4>
                                 <p class="text-amber-400 font-bold text-md mt-1">${c.price}</p>
                             </div>
-                            <button onclick="deleteCar(${c.id})" class="text-slate-500 hover:text-red-400 transition-colors bg-slate-800/80 p-2 rounded-lg backdrop-blur shadow"><i class="ph-fill ph-trash text-lg"></i></button>
+                            <button onclick="deleteCar('${c._id}')" class="text-slate-500 hover:text-red-400 transition-colors bg-slate-800/80 p-2 rounded-lg backdrop-blur shadow"><i class="ph-fill ph-trash text-lg"></i></button>
                         </div>
-                        <p class="text-slate-300 text-sm mb-4 leading-relaxed">${c.description}</p>
                         <div class="flex flex-wrap gap-2 mt-auto">
-                            ${c.features.map(f => `<span class="px-2.5 py-1 rounded-md bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700/80 shadow-sm">${f}</span>`).join('')}
+                            ${c.variants ? c.variants.map(v => `<span class="px-2 py-1 rounded-md bg-sky-500/10 text-[10px] font-bold text-sky-400 border border-sky-500/20">${v}</span>`).join('') : ''}
+                            ${c.features ? c.features.map(f => `<span class="px-2.5 py-1 rounded-md bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700/80 shadow-sm">${f}</span>`).join('') : ''}
                         </div>
                     </div>
                 </div>
@@ -290,7 +298,7 @@
             // Leads Tables
             const leadsHtml = currentLeads.slice().reverse().map(l => `
                 <tr class="group hover:bg-slate-800/30 transition-colors cursor-default">
-                    <td class="py-4 px-6 text-slate-500 text-xs font-mono">#${String(l.id).slice(-4)}</td>
+                    <td class="py-4 px-6 text-slate-500 text-xs font-mono">#${String(l._id).slice(-4)}</td>
                     <td class="py-4 px-6">
                         <div class="font-medium text-slate-200">${l.name}</div>
                         <div class="text-xs text-slate-500 mt-0.5"><i class="ph ph-phone mr-1"></i>${l.phone}</div>
@@ -349,7 +357,8 @@
                 document.getElementById('inpModel').value = '';
                 document.getElementById('inpImage').value = '';
                 document.getElementById('inpPrice').value = '';
-                document.getElementById('inpDesc').value = '';
+                document.getElementById('inpVariants').value = '';
+                document.getElementById('inpColors').value = '';
                 document.getElementById('inpFeat').value = '';
             }, 300);
         }
@@ -358,38 +367,58 @@
             const model = document.getElementById('inpModel').value;
             const image = document.getElementById('inpImage').value;
             const price = document.getElementById('inpPrice').value;
-            const desc = document.getElementById('inpDesc').value;
+            const variantsText = document.getElementById('inpVariants').value;
+            const colorsText = document.getElementById('inpColors').value;
             const featText = document.getElementById('inpFeat').value;
             
             if(!model || !price) return alert("Model & Price required!");
 
-            const newCar = {
-                id: Date.now(),
-                model, image, price, description: desc,
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Saving...';
+            saveBtn.disabled = true;
+
+            const carData = {
+                model, 
+                image, 
+                price,
+                variants: variantsText.split(',').map(v => v.trim()).filter(v => v),
+                colors: colorsText.split(',').map(c => c.trim()).filter(c => c),
                 features: featText.split(',').map(f => f.trim()).filter(f => f)
             };
 
-            currentCars.push(newCar);
-            
-            await fetch('/api/cars', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(currentCars)
-            });
-            
-            closeCarModal();
-            updateUI();
+            try {
+                const res = await fetch('/api/cars', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(carData)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert("Car saved to Database successfully! 🚀");
+                    closeCarModal();
+                    loadData();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (err) {
+                alert("Server Connection Error!");
+            } finally {
+                saveBtn.innerHTML = 'Save to Database';
+                saveBtn.disabled = false;
+            }
         }
 
         async function deleteCar(id) {
-            if(!confirm("Are you sure you want to remove this car?")) return;
-            currentCars = currentCars.filter(c => c.id !== id);
-            await fetch('/api/cars', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(currentCars)
-            });
-            updateUI();
+            if(!confirm("Are you sure you want to remove this car from Database?")) return;
+            try {
+                const res = await fetch(`/api/cars/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if(result.success) {
+                    loadData();
+                } else {
+                    alert("Delete Failed: " + result.error);
+                }
+            } catch (e) { alert("Server Connection Error!"); }
         }
 
         // Init
