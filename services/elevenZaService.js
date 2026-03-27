@@ -10,55 +10,42 @@ const API_BASE = process.env.ELEVEN_ZA_API_BASE;
 const AUTH_TOKEN = process.env.ELEVEN_ZA_AUTH_TOKEN;
 
 // ============================================
-// Function: Send Text Message via 11za API
+// Function: Send Text Message via 11za API (User Custom Format)
 // ============================================
 async function sendWhatsAppMessage(customerPhone, message) {
   try {
-    console.log(`📤 Sending reply to ${customerPhone}...`);
+    console.log(`📤 Sending reply to ${customerPhone} via 11za...`);
+
+    // Ensure phone number has country code (Assuming Indian numbers for this project)
+    let sendToNumber = customerPhone.toString();
+    if (sendToNumber.length === 10) {
+        sendToNumber = "91" + sendToNumber;
+    }
+
+    const payload = {
+        sendto: sendToNumber,
+        authToken: AUTH_TOKEN,
+        originWebsite: "https://engees.in",
+        contentType: "text",
+        text: message
+    };
 
     const response = await axios.post(
-      `${API_BASE}/sendText`,
-      {
-        to: customerPhone,
-        message: message,
-      },
+      "https://internal.11za.in/apis/sendMessage/sendMessages",
+      payload,
       {
         headers: {
-          "Content-Type": "application/json",
-          "authToken": AUTH_TOKEN,
-        },
+          "Content-Type": "application/json"
+        }
       }
     );
 
-    console.log(`✅ Message sent successfully to ${customerPhone}`);
+    console.log(`✅ Message sent successfully to ${sendToNumber}`);
     return { success: true, data: response.data };
 
   } catch (error) {
-    console.error(`❌ 11za API Error:`, error.response?.data || error.message);
-
-    // Agar 11za API ka format different ho, try alternate format
-    try {
-      const response = await axios.post(
-        `${API_BASE}/send-text`,
-        {
-          phone: customerPhone,
-          text: message,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "authToken": AUTH_TOKEN,
-          },
-        }
-      );
-
-      console.log(`✅ Message sent (alternate format) to ${customerPhone}`);
-      return { success: true, data: response.data };
-
-    } catch (altError) {
-      console.error(`❌ Alternate format also failed:`, altError.response?.data || altError.message);
-      return { success: false, error: altError.message };
-    }
+    console.error(`❌ 11za Send Message Error:`, error.response?.data || error.message);
+    return { success: false, error: error.message };
   }
 }
 
