@@ -101,18 +101,27 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+// --- DATABASE MIDDLEWARE (For Vercel Stability) ---
+const ensureDB = async (req, res, next) => {
+  try {
+    const connected = await connectDB();
+    if (connected) return next();
+    res.status(500).json({ success: false, error: "Database connection failed" });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+};
+
 // ============================================
 // REAL DATABASE API ENDPOINTS
 // ============================================
 
-app.get("/api/cars", async (req, res) => {
+app.get("/api/cars", ensureDB, async (req, res) => {
   try {
     const cars = await Car.find().sort({ createdAt: -1 });
     res.json(cars);
   } catch(e) { res.json([]); }
 });
 
-app.post("/api/cars", async (req, res) => {
+app.post("/api/cars", ensureDB, async (req, res) => {
   try {
     await connectDB(); // Ensure DB is connected before write
     const newCar = new Car(req.body);
@@ -128,7 +137,7 @@ app.delete("/api/cars/:id", async (req, res) => {
   } catch(e) { res.json({ success: false, error: e.message }); }
 });
 
-app.get("/api/leads", async (req, res) => {
+app.get("/api/leads", ensureDB, async (req, res) => {
   try {
     const leads = await Lead.find().sort({ createdAt: -1 });
     res.json(leads);
