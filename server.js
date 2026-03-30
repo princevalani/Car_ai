@@ -39,7 +39,10 @@ app.post("/webhook", async (req, res) => {
   try {
     const payload = req.body;
     
-    // Ignore status updates, only process actual incoming text messages
+    // Ensure DB is connected before processing
+    await connectDB();
+    
+    // Ignore status updates
     if (payload.event && payload.event !== "MoMessage") {
       return res.status(200).json({ status: "skipped", reason: "Not an incoming message" });
     }
