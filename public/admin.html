@@ -412,9 +412,13 @@
         }
 
         function updateLogsUI(logs) {
+            if (!logs || logs.length === 0) {
+                document.getElementById('logsTable').innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">No live messages yet...</td></tr>';
+                return;
+            }
             document.getElementById('logsTable').innerHTML = logs.map(l => `
                 <tr class="group hover:bg-slate-800/30 transition-colors cursor-default align-top">
-                    <td class="py-4 px-6 text-slate-500 text-xs">${new Date(l.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                    <td class="py-4 px-6 text-slate-500 text-xs">${new Date(l.createdAt || l.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
                     <td class="py-4 px-6">
                         <div class="font-bold text-slate-200">${l.name || 'WhatsApp User'}</div>
                         <div class="text-xs text-sky-500 mt-0.5">${l.phone}</div>
