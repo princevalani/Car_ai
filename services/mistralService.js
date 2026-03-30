@@ -14,9 +14,10 @@ async function getCarsDB() {
 async function saveLead(name, phone, car, date) {
     try {
         const newLead = new Lead({ name, phone, car, date });
-        await newLead.save();
+        const saved = await newLead.save();
         console.log(`✅ TEST DRIVE BOOKED IN REAL DB (Mistral): ${name} (${phone}) - ${car}`);
-    } catch(e) { console.error("Lead saving error", e); }
+        return saved;
+    } catch(e) { console.error("Lead saving error", e); return null; }
 }
 
 async function getDynamicPrompt() {
@@ -30,27 +31,38 @@ async function getDynamicPrompt() {
     });
 
     return `
-You are "Mahindra Mitra", the Expert Sales Assistant for Mahindra Auto.
-Your goal is to guide the customer through a step-by-step sales flow.
+You are "Mahindra Mitra", the Expert Sales Manager for Mahindra Auto Showroom.
+Your objective is to provide a premium, luxury experience to the customer and GUIDE them to book a Test Drive.
 
-RULES:
-1. ALWAYS reply in the SAME LANGUAGE as the user (Hindi/English/Hinglish).
-2. ONLY one step per message. Do not give all info at once.
-3. Use only the INVENTORY below.
+💎 TONE & STYLE:
+- Professional yet friendly (Hinglish/English/Hindi).
+- Use relevant emojis (🚙, ✨, 💰, 📍).
+- Keep responses concise and easy to read on WhatsApp.
 
-INVENTORY:
+🚀 SMART CONVERSATION LOGIC:
+1. **Context Awareness**: If the user mentions a car model (e.g., "Thar details"), SKIP initial questions and give details immediately.
+2. **Comparison**: If a user asks to compare models, provide a quick bullet-point comparison.
+3. **Finance & EMI Advisor**: 
+   - If user asks about EMI/Finance:
+     * Assume a standard **9% p.a. Interest Rate**.
+     * Ask for **Down Payment** amount.
+     * Ask for **Tenure** (e.g., 3, 5, or 7 years).
+     * Calculate and provide a *tentative* Monthly EMI figure.
+4. **Sales Flow**:
+   - PHASE A: Information (Variants, Colors, Features, Price).
+   - PHASE B: Finance (EMI calculations if asked).
+   - PHASE C: Lead Generation (Ask for Name, Phone, and Preferred Date for Test Drive).
+
+📊 INVENTORY DATA:
 ${carRules || "Updating inventory..."}
 
-STRICT CONVERSATION FLOW:
-- Step 1: Ask "Which Mahindra car are you interested in?"
-- Step 2: List variants only.
-- Step 3: List colors only.
-- Step 4: Show Price & ask about Features.
-- Step 5: Ask if they want a Test Drive.
-- Step 6: Get Name, Phone, and Date/Time for booking.
+⚠️ STRICT RULES:
+- ONLY sell cars from the INVENTORY above.
+- Be VERY CLEAR that EMI figures are "Tentative & Subject to Bank Approval".
+- If a user provides booking details, ALWAYS generate the ||LEAD|| string at the very end.
+- Use bold text for car names, prices, and EMI amounts.
 
-LEAD CAPTURE:
-If a user provides details, add this hidden line at the end:
+LEAD FORMAT (Hidden):
 ||LEAD||<Name>||<Phone>||<Car Model>||<Date/Time>||
 `;
 }
@@ -62,24 +74,26 @@ async function getMistralReply(customerPhone, customerMessage) {
         const msgLower = customerMessage.toLowerCase();
         let history = chatHistories.get(customerPhone) || [];
 
-        if (["hi", "hii", "hello", "start"].includes(msgLower)) {
-            const welcome = `*Welcome to Mahindra Auto Showroom!* 🚙✨\n\nI am your AI Assistant 'Mahindra Mitra'. How can I help you today?`;
-            history.push({ role: "user", content: customerMessage }, { role: "assistant", content: welcome });
-            chatHistories.set(customerPhone, history.slice(-10));
+        // Check for Greetings
+        const greetings = ["hi", "hii", "hello", "start", "namaste", "hey"];
+        if (greetings.some(g => msgLower === g)) {
+            const welcome = `*Welcome to Mahindra's Elite Experience!* 🚙✨\n\nI am **Mahindra Mitra**, your personal AI Sales Manager.\n\nI can help you with:\n✅ Latest Car Details & Prices\n✅ Feature Comparisons\n✅ Booking a Test Drive\n\nWhich Mahindra car is on your mind today? (e.g., Thar, XUV700, Scorpio-N)`;
+            history = [{ role: "assistant", content: welcome }];
+            chatHistories.set(customerPhone, history);
             return welcome;
         }
 
         const dynamicKnowledge = await getDynamicPrompt();
 
         const reqBody = {
-            model: "mistral-small-latest", // Use mistral-large-latest or mistral-small-latest
+            model: "mistral-small-latest",
             messages: [
                 { role: "system", content: dynamicKnowledge },
                 ...history,
                 { role: "user", content: customerMessage }
             ],
-            temperature: 0.7,
-            max_tokens: 2048
+            temperature: 0.6,
+            max_tokens: 1000
         };
 
         const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -91,24 +105,27 @@ async function getMistralReply(customerPhone, customerMessage) {
             body: JSON.stringify(reqBody)
         });
 
-        if (!response.ok) {
-            console.error("Mistral API Error Status:", response.status);
-            throw new Error(`Mistral API Error: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Mistral API Error: ${response.statusText}`);
 
         const data = await response.json();
-        let aiReply = data.choices[0]?.message?.content || "I'm sorry, I'm having trouble responding right now.";
+        let aiReply = data.choices[0]?.message?.content || "Apologies, I'm facing a slight technical glitch. How else can I assist you?";
 
+        // Lead Capture Logic
         const leadMatch = aiReply.match(/\|\|LEAD\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|/i);
         if (leadMatch) {
             const [_, lName, lPhone, lCar, lDate] = leadMatch;
-            await saveLead(lName.trim(), lPhone.trim(), lCar.trim(), lDate.trim());
+            const leadObj = await saveLead(lName.trim(), lPhone.trim(), lCar.trim(), lDate.trim());
             aiReply = aiReply.replace(/\|\|LEAD\|\|.*/gi, '').trim();
+            
+            if (leadObj) {
+                aiReply += `\n\n📄 *Your Booking Receipt is Ready!*\nDownload it here: http://localhost:3000/api/receipt/${leadObj._id}`;
+            }
         }
 
-        // Remove markdown stars from final reply
-        aiReply = aiReply.replace(/\*/g, '').trim();
+        // Clean up stars for cleaner WhatsApp look if needed (optional)
+        // aiReply = aiReply.replace(/\*\*/g, '*'); 
 
+        // Update History
         history.push({ role: "user", content: customerMessage }, { role: "assistant", content: aiReply });
         chatHistories.set(customerPhone, history.slice(-10));
 
@@ -116,7 +133,7 @@ async function getMistralReply(customerPhone, customerMessage) {
 
     } catch (error) {
         console.error("❌ Mistral Error:", error.message);
-        return "I'm sorry, I'm having trouble responding right now. Please try again in a moment! 🙏";
+        return "I'm sorry, I'm having trouble responding right now. Please try again or visit our showroom! 🙏";
     }
 }
 

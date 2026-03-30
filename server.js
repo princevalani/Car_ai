@@ -9,6 +9,7 @@ const { connectDB, Car, Lead } = require("./services/dbService");
 const { getMistralReply } = require("./services/mistralService");
 const { sendWhatsAppMessage } = require("./services/elevenZaService");
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -141,6 +142,50 @@ app.get("/api/stats", (req, res) => {
 });
 
 app.get("/api/logs", (req, res) => { res.json(messageLogs); });
+
+// ============================================
+// PDF RECEIPT GENERATOR 📄
+// ============================================
+app.get("/api/receipt/:id", async (req, res) => {
+    try {
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) return res.status(404).send("Lead not found");
+
+        const doc = new PDFDocument({ margin: 50 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename=Mahindra_Receipt_${lead.name.replace(/\s/g, '_')}.pdf`);
+        doc.pipe(res);
+
+        // Header
+        doc.fontSize(24).font('Helvetica-Bold').text('MAHINDRA AUTO SHOWROOM', { align: 'center' });
+        doc.fontSize(10).font('Helvetica').text('Virtual Sales Receipt', { align: 'center' });
+        doc.moveDown(2);
+
+        // Content Box
+        doc.rect(50, 150, 500, 200).stroke();
+        doc.fontSize(14).font('Helvetica-Bold').text('BOOKING DETAILS', 70, 170);
+        doc.moveDown();
+
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Customer Name: ${lead.name}`, 70);
+        doc.text(`Phone Number: ${lead.phone}`, 70);
+        doc.text(`Car Interest: ${lead.car}`, 70);
+        doc.text(`Appointment: ${lead.date}`, 70);
+        doc.moveDown();
+
+        doc.fontSize(10).text(`Generated On: ${new Date().toLocaleString()}`, 70);
+
+        // Footer
+        doc.moveDown(5);
+        doc.fontSize(12).font('Helvetica-Oblique').text('Experience the Mahindra Power!', { align: 'center' });
+        doc.fontSize(8).text('Note: This is a system-generated receipt and for reference only.', { align: 'center' });
+
+        doc.end();
+
+    } catch (err) {
+        res.status(500).send("Error generating PDF: " + err.message);
+    }
+});
 
 app.post("/api/toggle-ai", (req, res) => {
   stats.aiEnabled = !stats.aiEnabled;
