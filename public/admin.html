@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons for Premium Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         body {
@@ -98,6 +100,17 @@
                         <p class="text-4xl font-bold text-white flex items-center gap-2" id="statMessages">0</p>
                     </div>
                 </div>
+                
+                <!-- Analytics Chart -->
+                <div class="glass-panel p-8 rounded-2xl border border-slate-700/50">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2"><i class="ph ph-chart-bar text-sky-400"></i> Customer Interest Analytics</h3>
+                        <span class="text-xs text-slate-500">Live data from WhatsApp interactions</span>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
 
                 <!-- Recent Activity -->
                 <div class="glass-panel rounded-2xl p-6 border border-slate-700/50">
@@ -136,7 +149,12 @@
 
             <!-- ====== LEADS TAB ====== -->
             <div id="tab-leads" class="tab-content hidden space-y-6">
-                <p class="text-slate-400">Test drive bookings extracted automatically by the AI.</p>
+                <div class="flex justify-between items-center">
+                    <p class="text-slate-400">Test drive bookings extracted automatically by the AI.</p>
+                    <button onclick="exportLeads()" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 px-4 py-2 rounded-lg border border-sky-500/20 flex items-center gap-2 transition-all">
+                        <i class="ph ph-download-simple"></i> Download CSV Report
+                    </button>
+                </div>
                 <div class="glass-panel rounded-2xl p-2 border border-slate-700/50">
                     <table class="w-full text-left">
                         <thead class="bg-slate-800/50">
@@ -228,6 +246,7 @@
         let currentCars = [];
         let currentLeads = [];
         let currentStats = {};
+        let myChart = null;
 
         // Tab Switching
         function switchTab(tab) {
@@ -309,6 +328,7 @@
                 </tr>
             `).join('');
             
+            
             document.getElementById('allLeadsTable').innerHTML = leadsHtml;
             document.getElementById('recentLeadsTable').innerHTML = currentLeads.slice().reverse().slice(0, 5).map(l => `
                 <tr class="border-b border-slate-700/30 last:border-0 hover:bg-slate-800/30">
@@ -318,6 +338,77 @@
                     <td class="py-3 px-4 text-slate-500 text-sm">${l.date}</td>
                 </tr>
             `).join('');
+
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('inventoryChart').getContext('2d');
+            
+            // Count interest per car
+            const counts = {};
+            currentLeads.forEach(l => {
+                counts[l.car] = (counts[l.car] || 0) + 1;
+            });
+
+            const labels = Object.keys(counts);
+            const data = Object.values(counts);
+
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Test Drive Requests',
+                        data: data,
+                        backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                        borderColor: 'rgba(56, 189, 248, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(56, 189, 248, 0.4)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#94a3b8', stepSize: 1 }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportLeads() {
+            if (currentLeads.length === 0) return alert("No leads to export!");
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID,Customer Name,Phone,Car Model,Date/Time,Source\n";
+            
+            currentLeads.forEach(l => {
+                const row = `${l._id},${l.name},${l.phone},${l.car},${l.date},${l.source || 'WhatsApp'}`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Mahindra_Leads_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function updateLogsUI(logs) {
