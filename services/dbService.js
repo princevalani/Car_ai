@@ -4,22 +4,28 @@
 const mongoose = require('mongoose');
 
 // Database Connection Logic
+let isConnected = false;
 const connectDB = async () => {
     try {
+        if (isConnected || mongoose.connection.readyState === 1) {
+            console.log("♻️ Using existing MongoDB connection");
+            return true;
+        }
+
         if (!process.env.MONGODB_URI) {
-            console.warn("⚠️ MONGODB_URI missing in .env. Using JSON fallback.");
+            console.warn("⚠️ MONGODB_URI missing in .env.");
             return false;
         }
 
-        // Add timeout to not hang forever
         const options = {
-            serverSelectionTimeoutMS: 5000, 
+            serverSelectionTimeoutMS: 30000, // Increased for Vercel
             socketTimeoutMS: 45000,
-            family: 4 // Use IPv4 for stability
+            family: 4 
         };
 
         console.log("⏳ Connecting to MongoDB Atlas...");
-        await mongoose.connect(process.env.MONGODB_URI, options);
+        const db = await mongoose.connect(process.env.MONGODB_URI, options);
+        isConnected = true;
         console.log("💎 MongoDB Connected Successfully!");
         return true;
     } catch (err) {
