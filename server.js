@@ -68,32 +68,30 @@ app.post("/webhook", async (req, res) => {
 
     let aiReply = "";
     try {
+      console.log(`🤖 Processing message for ${customerPhone}: "${customerMessage}"`);
       // Mistral is the ONLY Primary AI 🦍
       if (process.env.MISTRAL_API_KEY) {
         aiReply = await getMistralReply(customerPhone, customerMessage);
+        console.log(`✨ AI Result: "${aiReply.substring(0, 50)}..."`);
       }
 
-      // Final Local Fallback if AI fails
+      // Final Local Fallback if AI fails or returns empty
       if (!aiReply || aiReply.includes("I'm sorry, I'm having trouble")) {
+        console.log("⚠️ Falling back to Local AI logic!");
         aiReply = getLocalFallbackReply(customerMessage);
       }
     } catch (aiErr) {
+       console.error(`❌ AI Processing Error: ${aiErr.message}`);
        aiReply = getLocalFallbackReply(customerMessage);
     }
 
     const sendResult = await sendWhatsAppMessage(customerPhone, aiReply);
-    if (sendResult.success) stats.totalReplied++;
-
-    messageLogs.unshift({
-      time: new Date().toISOString(),
-      phone: customerPhone,
-      name: customerName,
-      incoming: customerMessage,
-      outgoing: aiReply,
-      status: sendResult.success ? "sent" : "failed",
-    });
-
-    res.status(200).json({ status: "success", reply: aiReply });
+    if (sendResult.success) {
+        stats.totalReplied++;
+        console.log(`✅ Message sent to ${customerPhone}`);
+    } else {
+        console.log(`❌ Failed to send message to ${customerPhone}: ${sendResult.error || "Unknown Error"}`);
+    }
 
   } catch (error) {
     res.status(200).json({ status: "error" });
