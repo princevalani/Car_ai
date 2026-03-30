@@ -3,11 +3,21 @@
 // ============================================
 const { Car, Lead } = require("./dbService"); // Real DB Models
 
-// Read cars from Real DB
+// Read cars from Real DB (with Fail-Safe)
 async function getCarsDB() {
     try {
-        return await Car.find();
-    } catch(e) { return []; }
+        // Add a 3-second timeout to DB query
+        const cars = await Car.find().maxTimeMS(3000);
+        if (cars && cars.length > 0) return cars;
+        throw new Error("Empty DB");
+    } catch(e) { 
+        console.log("⚠️ Database Fetch Failed, using Fallback Inventory.");
+        return [
+            { model: "Mahindra Thar", price: "₹11-17L", variants: ["AX", "LX"], features: ["4x4", "Off-road"] },
+            { model: "XUV700", price: "₹14-26L", variants: ["MX", "AX5", "AX7"], features: ["ADAS", "Skyroof"] },
+            { model: "Scorpio-N", price: "₹13-24L", variants: ["Z2", "Z4", "Z8L"], features: ["4XPLOR", "Sunroof"] }
+        ];
+    }
 }
 
 // Write lead to Real DB
