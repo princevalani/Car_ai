@@ -141,6 +141,14 @@ app.get("/api/leads", ensureDB, async (req, res) => {
   } catch(e) { res.json([]); }
 });
 
+app.patch("/api/leads/:id", ensureDB, async (req, res) => {
+  try {
+    const { status } = req.body;
+    await Lead.findByIdAndUpdate(req.params.id, { status });
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get("/api/debug-db", ensureDB, async (req, res) => {
   try {
     const dbName = mongoose.connection.name;

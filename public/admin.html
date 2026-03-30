@@ -315,18 +315,33 @@
             `).join('');
 
             // Leads Tables
-            const leadsHtml = currentLeads.slice().reverse().map(l => `
+            const leadsHtml = currentLeads.slice().reverse().map(l => {
+                const statusColors = { 'New': 'emerald', 'Contacted': 'sky', 'Completed': 'purple', 'Rejected': 'rose' };
+                const color = statusColors[l.status] || 'emerald';
+                return `
                 <tr class="group hover:bg-slate-800/30 transition-colors cursor-default">
                     <td class="py-4 px-6 text-slate-500 text-xs font-mono">#${String(l._id).slice(-4)}</td>
                     <td class="py-4 px-6">
-                        <div class="font-medium text-slate-200">${l.name}</div>
-                        <div class="text-xs text-slate-500 mt-0.5"><i class="ph ph-phone mr-1"></i>${l.phone}</div>
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <div class="font-medium text-slate-200">${l.name}</div>
+                                <div class="text-xs text-slate-500 mt-0.5">${l.phone}</div>
+                            </div>
+                            <a href="https://wa.me/${l.phone.replace(/\D/g,'')}" target="_blank" class="p-2 rounded-lg bg-slate-800 text-emerald-400 hover:bg-emerald-500/10 transition-all opacity-0 group-hover:opacity-100"><i class="ph ph-whatsapp-logo text-lg"></i></a>
+                        </div>
                     </td>
                     <td class="py-4 px-6 text-sky-400 font-medium">${l.car}</td>
                     <td class="py-4 px-6 text-slate-400 text-sm"><i class="ph ph-calendar-blank mr-1"></i>${l.date}</td>
-                    <td class="py-4 px-6"><span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold border border-emerald-500/20">New Lead</span></td>
+                    <td class="py-4 px-6">
+                        <select onchange="updateLeadStatus('${l._id}', this.value)" class="bg-${color}-500/10 text-${color}-400 rounded-lg text-xs font-semibold border border-${color}-500/20 px-2 py-1 outline-none cursor-pointer">
+                            <option value="New" ${l.status === 'New' ? 'selected' : ''}>New</option>
+                            <option value="Contacted" ${l.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
+                            <option value="Completed" ${l.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                            <option value="Rejected" ${l.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                        </select>
+                    </td>
                 </tr>
-            `).join('');
+            `}).join('');
             
             
             document.getElementById('allLeadsTable').innerHTML = leadsHtml;
@@ -501,6 +516,18 @@
                 saveBtn.innerHTML = 'Save to Database';
                 saveBtn.disabled = false;
             }
+        }
+
+        async function updateLeadStatus(id, newStatus) {
+            try {
+                const res = await fetch(`/api/leads/${id}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const result = await res.json();
+                if (result.success) loadData();
+            } catch (err) { alert("Status Update Failed!"); }
         }
 
         async function deleteCar(id) {
