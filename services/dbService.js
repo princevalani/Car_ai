@@ -59,7 +59,18 @@ const leadSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+// 💬 LOG MODEL (Conversation History)
+const logSchema = new mongoose.Schema({
+    phone: { type: String, required: true },
+    name: String,
+    incoming: { type: String, required: true },
+    outgoing: { type: String, required: true },
+    status: { type: String, default: 'sent' },
+    createdAt: { type: Date, default: Date.now }
+});
+
 const Car = mongoose.model('Car', carSchema);
 const Lead = mongoose.model('Lead', leadSchema);
+const Log = mongoose.model('Log', logSchema);
 
-module.exports = { connectDB, Car, Lead };
+module.exports = { connectDB, Car, Lead, Log };

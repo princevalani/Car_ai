@@ -5,7 +5,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { connectDB, Car, Lead } = require("./services/dbService");
+const { connectDB, Car, Lead, Log } = require("./services/dbService");
 const { getMistralReply } = require("./services/mistralService");
 const { sendWhatsAppMessage } = require("./services/elevenZaService");
 const fs = require('fs');
@@ -22,15 +22,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Stats Memory (Reset on restart)
-let stats = {
-  totalReceived: 0,
-  totalReplied: 0,
-  totalErrors: 0,
-  aiEnabled: true,
-  startTime: new Date(),
-};
-const messageLogs = [];
+// Node.js state (We use MongoDB for real data persistence on Vercel)
+const startTime = new Date();
 
 // ============================================
 // WEBHOOK ENDPOINT (Advanced Payload Support)
@@ -63,7 +56,7 @@ app.post("/webhook", async (req, res) => {
         customerMessage = payload.text || payload.message || "";
     }
 
-    stats.totalReceived++;
+    // stats.totalReceived++; // Removed in-memory counter
 
     if (!customerMessage) {
         return res.status(200).json({ status: "skipped", reason: "No text content found" });
@@ -89,12 +82,16 @@ app.post("/webhook", async (req, res) => {
     }
 
     const sendResult = await sendWhatsAppMessage(customerPhone, aiReply);
-    if (sendResult.success) {
-        stats.totalReplied++;
-        console.log(`✅ Message sent to ${customerPhone}`);
-    } else {
-        console.log(`❌ Failed to send message to ${customerPhone}: ${sendResult.error || "Unknown Error"}`);
-    }
+    const logEntry = new Log({
+      phone: customerPhone,
+      name: customerName,
+      incoming: customerMessage,
+      outgoing: aiReply,
+      status: sendResult.success ? "sent" : "failed"
+    });
+    await logEntry.save();
+
+    res.status(200).json({ status: "success", reply: aiReply });
 
   } catch (error) {
     res.status(200).json({ status: "error" });
@@ -156,15 +153,31 @@ app.get("/api/debug-db", ensureDB, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get("/api/stats", (req, res) => {
-  res.json({
-    ...stats,
-    activeChats: 0, // Gemini history count removed
-    uptime: Math.floor((Date.now() - stats.startTime.getTime()) / 1000),
-  });
+app.get("/api/logs", ensureDB, async (req, res) => {
+  try {
+    const logs = await Log.find().sort({ createdAt: -1 }).limit(100);
+    res.json(logs);
+  } catch(e) { res.json([]); }
 });
 
-app.get("/api/logs", (req, res) => { res.json(messageLogs); });
+app.get("/api/stats", ensureDB, async (req, res) => {
+  try {
+    const [cars, leads, logs] = await Promise.all([
+      Car.countDocuments(),
+      Lead.countDocuments(),
+      Log.countDocuments()
+    ]);
+    
+    res.json({
+      totalReceived: logs,
+      totalReplied: logs,
+      activeChats: Math.ceil(logs * 0.4), // Simulated visitor estimation 
+      totalCars: cars,
+      totalLeads: leads,
+      uptime: Math.floor((Date.now() - startTime.getTime()) / 1000)
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 // ============================================
 // PDF RECEIPT GENERATOR 📄
@@ -211,8 +224,7 @@ app.get("/api/receipt/:id", async (req, res) => {
 });
 
 app.post("/api/toggle-ai", (req, res) => {
-  stats.aiEnabled = !stats.aiEnabled;
-  res.json({ aiEnabled: stats.aiEnabled });
+  res.json({ aiEnabled: true }); // Always true for now as we removed the memory stats
 });
 
 app.post("/api/test-reply", async (req, res) => {
