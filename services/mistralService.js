@@ -29,13 +29,19 @@ async function saveLead(name, phone, car, date) {
 
 async function getDynamicPrompt() {
     const cars = await getCarsDB();
+    console.log(`📡 Inventory Feed: Found ${cars.length} cars in Database.`);
+    
     let carRules = "";
     cars.forEach(c => {
         let v = c.variants ? c.variants.join(", ") : "Standard";
         let co = c.colors ? c.colors.join(", ") : "Standard";
         let f = c.features ? c.features.join(", ") : "Standard";
-        carRules += `- Model: ${c.model} | Price: ${c.price} | Variants: ${v} | Colors: ${co} | Features: ${f}\n`;
+        carRules += `- Model: **${c.model}** | Price: **${c.price}** | Variants: **${v}** | Colors: **${co}** | Features: **${f}**\n`;
     });
+
+    if (cars.length === 0) {
+        console.warn("⚠️ ALERT: AI is working with ZERO inventory! Using local memory fallback.");
+    }
 
     return `
 You are "Mahindra Mitra", the Expert Sales Manager for Mahindra Auto Showroom.
