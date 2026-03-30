@@ -114,6 +114,7 @@ app.get("/api/cars", async (req, res) => {
 
 app.post("/api/cars", async (req, res) => {
   try {
+    await connectDB(); // Ensure DB is connected before write
     const newCar = new Car(req.body);
     await newCar.save();
     res.json({ success: true, car: newCar });
