@@ -144,6 +144,18 @@ app.get("/api/leads", ensureDB, async (req, res) => {
   } catch(e) { res.json([]); }
 });
 
+app.get("/api/debug-db", ensureDB, async (req, res) => {
+  try {
+    const dbName = mongoose.connection.name;
+    const count = await Car.countDocuments();
+    res.json({ 
+      connected_database: dbName, 
+      cars_found: count,
+      message: "Check your Vercel Environment Variables if this DB name is not what you expected!" 
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get("/api/stats", (req, res) => {
   res.json({
     ...stats,
