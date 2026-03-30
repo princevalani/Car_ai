@@ -76,7 +76,7 @@ LEAD FORMAT (Hidden):
 
 const chatHistories = new Map();
 
-async function getMistralReply(customerPhone, customerMessage) {
+async function getMistralReply(customerPhone, customerMessage, host = "localhost:3000") {
     try {
         const msgLower = customerMessage.toLowerCase();
         let history = chatHistories.get(customerPhone) || [];
@@ -125,7 +125,8 @@ async function getMistralReply(customerPhone, customerMessage) {
             aiReply = aiReply.replace(/\|\|LEAD\|\|.*/gi, '').trim();
             
             if (leadObj) {
-                aiReply += `\n\n📄 *Your Booking Receipt is Ready!*\nDownload it here: http://localhost:3000/api/receipt/${leadObj._id}`;
+                const protocol = host.includes('localhost') ? 'http' : 'https';
+                aiReply += `\n\n📄 *Your Booking Receipt is Ready!*\nDownload it here: ${protocol}://${host}/api/receipt/${leadObj._id}`;
             }
         }
 

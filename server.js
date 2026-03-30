@@ -74,7 +74,7 @@ app.post("/webhook", async (req, res) => {
       console.log(`🤖 Processing message for ${customerPhone}: "${customerMessage}"`);
       // Mistral is the ONLY Primary AI 🦍
       if (process.env.MISTRAL_API_KEY) {
-        aiReply = await getMistralReply(customerPhone, customerMessage);
+        aiReply = await getMistralReply(customerPhone, customerMessage, req.get('host'));
         console.log(`✨ AI Result: "${aiReply.substring(0, 50)}..."`);
       }
 
@@ -200,7 +200,7 @@ app.post("/api/test-reply", async (req, res) => {
 
     // 1️⃣ Mistral is now ONLY AI 🦍
     if (process.env.MISTRAL_API_KEY) {
-        const mistralReply = await getMistralReply(phone || "test-user", message);
+        const mistralReply = await getMistralReply(phone || "test-user", message, req.get('host'));
         if (mistralReply && !mistralReply.includes("I'm sorry, I'm having trouble")) {
             aiReply = mistralReply;
         }
