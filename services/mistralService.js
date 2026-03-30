@@ -3,20 +3,17 @@
 // ============================================
 const { Car, Lead } = require("./dbService"); // Real DB Models
 
-// Read cars from Real DB (with Fail-Safe)
+// Read cars from Real DB (Primary Source)
 async function getCarsDB() {
     try {
-        // Add a 3-second timeout to DB query
-        const cars = await Car.find().maxTimeMS(3000);
+        // Dynamic DB Fetch with 5-second timeout
+        const cars = await Car.find().maxTimeMS(5000);
         if (cars && cars.length > 0) return cars;
-        throw new Error("Empty DB");
+        return [];
     } catch(e) { 
-        console.log("⚠️ Database Fetch Failed, using Fallback Inventory.");
-        return [
-            { model: "Mahindra Thar", price: "₹11-17L", variants: ["AX", "LX"], features: ["4x4", "Off-road"] },
-            { model: "XUV700", price: "₹14-26L", variants: ["MX", "AX5", "AX7"], features: ["ADAS", "Skyroof"] },
-            { model: "Scorpio-N", price: "₹13-24L", variants: ["Z2", "Z4", "Z8L"], features: ["4XPLOR", "Sunroof"] }
-        ];
+        console.error("❌ MONGODB ERROR ON VERCEL:", e.message);
+        console.log("👉 Suggestion: Add 0.0.0.0/0 in MongoDB Atlas Network Access!");
+        throw e; // Stop here if DB is not working
     }
 }
 
